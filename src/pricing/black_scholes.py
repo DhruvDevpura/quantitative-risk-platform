@@ -7,17 +7,20 @@ K = 40 #strike price
 T = 0.5 #time in years
 sigma = 0.2 #volatility of stock
 
-def bs_call_price(S, K, T, r, sigma):
+def d1_d2(S, K, T, r, sigma):
     d1 = (np.log(S/K) + (r*T + ((sigma**2)*(T/2))))/(sigma*(T**(0.5)))
     d2 = (np.log(S/K) + (r*T - ((sigma**2)*(T/2))))/(sigma*(T**(0.5)))
+    return d1, d2
+
+def bs_call_price(S, K, T, r, sigma):
+    d1,d2 = d1_d2(S, K, T, r, sigma)
     c = (S*(norm.cdf(d1))) - (K*(np.exp((-1)*r*T))*(norm.cdf(d2)))
     return c
 
 def bs_put_price(S, K, T, r, sigma):
-    d1 = (np.log(S/K) + (r*T + ((sigma**2)*(T/2))))/(sigma*(T**(0.5)))
-    d2 = (np.log(S/K) + (r*T - ((sigma**2)*(T/2))))/(sigma*(T**(0.5)))
-    c = -(S*(norm.cdf(-d1))) + (K*(np.exp((-1)*r*T))*(norm.cdf(-d2)))
-    return c
+    d1,d2 = d1_d2(S, K, T, r, sigma)
+    p = (K*(np.exp(-r*T))*(norm.cdf(-d2))) - (S*(norm.cdf(-d1)))
+    return p
 
 c = bs_call_price(S0,K,T,r,sigma)
 p = bs_put_price(S0,K,T,r,sigma)
@@ -30,6 +33,35 @@ def put_call_parity(c,p,S,K,T,r):
     else:
         return "P-C Parity doesnt hold --> Arbitrage oppurtunity!"
 
-print("Call price: ",c)
-print("Put price: ",p)
-print(put_call_parity(c,p,S0,K,T,r))
+def delta(S, K, T, r, sigma):
+    d1,d2 = d1_d2(S, K, T, r, sigma)
+    return norm.cdf(d1)
+
+def gamma(S, K, T, r, sigma):
+    d1,d2 = d1_d2(S, K, T, r, sigma)
+    gma = (norm.pdf(d1))/(S*sigma*(T**(0.5)))
+    return gma
+
+def vega(S, K, T, r, sigma):
+    d1,d2 = d1_d2(S, K, T, r, sigma)
+    vg = S * norm.pdf(d1) * (T**(0.5))
+    return vg
+
+def theta(S, K, T, r, sigma):
+    d1,d2 = d1_d2(S, K, T, r, sigma)
+    th = -(S * norm.pdf(d1) * sigma) / (2*(T**(0.5))) - r*K*np.exp(-r*T)*norm.cdf(d2)
+    return th
+
+def rho(S, K, T, r, sigma):
+    d1,d2 = d1_d2(S, K, T, r, sigma)
+    rh = K * T * (np.exp(-r*T)) * norm.cdf(d2)
+    return rh
+
+print("Call price: ", c)
+print("Put price: ", p)
+print(put_call_parity(c, p, S0, K, T, r))
+print("Delta: ", delta(S0, K, T, r, sigma))
+print("Gamma: ", gamma(S0, K, T, r, sigma))
+print("Vega: ", vega(S0, K, T, r, sigma))
+print("Theta: ", theta(S0, K, T, r, sigma))
+print("Rho: ", rho(S0, K, T, r, sigma))
