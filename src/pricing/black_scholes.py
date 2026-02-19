@@ -22,5 +22,14 @@ def bs_put_price(S, K, T, r, sigma):
 c = bs_call_price(S0,K,T,r,sigma)
 p = bs_put_price(S0,K,T,r,sigma)
 
+def put_call_parity(c,p,S,K,T,r):
+    lhs = c + (K*(np.exp((-r)*T))) 
+    rhs = p + S
+    if(lhs==rhs):
+        return "Put Call Parity Holds"
+    else:
+        return "P-C Parity doesnt hold --> Arbitrage oppurtunity!"
+
 print("Call price: ",c)
 print("Put price: ",p)
+print(put_call_parity(c,p,S0,K,T,r))
