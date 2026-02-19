@@ -57,11 +57,14 @@ def rho(S, K, T, r, sigma):
     rh = K * T * (np.exp(-r*T)) * norm.cdf(d2)
     return rh
 
-print("Call price: ", c)
-print("Put price: ", p)
-print(put_call_parity(c, p, S0, K, T, r))
-print("Delta: ", delta(S0, K, T, r, sigma))
-print("Gamma: ", gamma(S0, K, T, r, sigma))
-print("Vega: ", vega(S0, K, T, r, sigma))
-print("Theta: ", theta(S0, K, T, r, sigma))
-print("Rho: ", rho(S0, K, T, r, sigma))
+if __name__ == "__main__":
+    c = bs_call_price(S0,K,T,r,sigma)
+    p = bs_put_price(S0,K,T,r,sigma)
+    print("Call price: ", c)
+    print("Put price: ", p)
+    print(put_call_parity(c,p,S0,K,T,r))
+    print("Delta: ", delta(S0, K, T, r, sigma))
+    print("Gamma: ", gamma(S0, K, T, r, sigma))
+    print("Vega: ", vega(S0, K, T, r, sigma))
+    print("Theta: ", theta(S0, K, T, r, sigma))
+    print("Rho: ", rho(S0, K, T, r, sigma))
