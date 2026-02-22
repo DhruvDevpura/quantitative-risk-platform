@@ -9,6 +9,7 @@ T = 0.5 #time in years
 sigma = 0.2 #volatility of stock
 
 def mc_call_price(S, K, T, r, sigma):
+    #Calculate European call option price using Monte Carlo simulation.
     Z = np.random.standard_normal(10000)
     S_T = S * np.exp((r - 0.5*sigma**2)*T + sigma*((T**(0.5))*Z))
     payoff = np.maximum(S_T - K,0)
@@ -16,6 +17,7 @@ def mc_call_price(S, K, T, r, sigma):
     return price
 
 def mc_put_price(S, K, T, r, sigma):
+    #Calculate European put option price using Monte Carlo simulation.
     Z = np.random.standard_normal(10000)
     S_T = S * np.exp((r - 0.5*sigma**2)*T + sigma*((T**(0.5))*Z))
     payoff = np.maximum(K - S_T,0)

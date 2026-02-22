@@ -1,3 +1,4 @@
+import numpy as np
 import sys
 sys.path.append('src/pricing')
 from black_scholes import *
@@ -26,17 +27,33 @@ def test_deep_otm_call():
     c = bs_call_price(50, 100, 0.5, 0.1, 0.2)
     assert c < 0.5
 
-def test_delta_range():
-    d = delta(42, 40, 0.5, 0.1, 0.2)
-    assert 0 < d < 1
-
 def test_vega_positive():
     v = vega(42, 40, 0.5, 0.1, 0.2)
     assert v > 0
 
+def test_delta_range():
+    d = delta_call(42, 40, 0.5, 0.1, 0.2)
+    assert 0 < d < 1
+
 def test_theta_negative():
-    t = theta(42, 40, 0.5, 0.1, 0.2)
+    t = theta_call(42, 40, 0.5, 0.1, 0.2)
     assert t < 0
+
+def test_delta_put_negative():
+    d = delta_put(42, 40, 0.5, 0.1, 0.2)
+    assert -1 < d < 0
+
+def test_theta_put_negative():
+    t = theta_put(42, 40, 0.5, 0.1, 0.2)
+    assert t < 0
+
+def test_rho_call_positive():
+    r = rho_call(42, 40, 0.5, 0.1, 0.2)
+    assert r > 0
+
+def test_rho_put_negative():
+    r = rho_put(42, 40, 0.5, 0.1, 0.2)
+    assert r < 0
 
 #Monte Carlo tests
 def test_mc_call_close_to_bs():

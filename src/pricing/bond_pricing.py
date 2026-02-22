@@ -6,6 +6,7 @@ frequency = 2 #semi-annual
 market_price = 950
 
 def bond_price(face_value, coupon_rate, r, T, frequency):
+    #Calculate bond price using discounted cash flow method.
     price = 0
     coupon_payment_per_period = face_value * coupon_rate / frequency
     total_periods = int(T * frequency)
@@ -15,6 +16,7 @@ def bond_price(face_value, coupon_rate, r, T, frequency):
     return price
 
 def yield_to_maturity(face_value, coupon_rate, market_price, T, frequency):
+    #Calculate yield to maturity using Newton-Raphson method.
     r = coupon_rate  # initial guess
     for i in range(1000):
         f = bond_price(face_value, coupon_rate, r, T, frequency) - market_price
@@ -25,6 +27,7 @@ def yield_to_maturity(face_value, coupon_rate, market_price, T, frequency):
     return r
 
 def duration(face_value, coupon_rate, r, T, frequency):
+    #Calculate Macaulay duration - weighted average time of cash flows.
     price = bond_price(face_value, coupon_rate, r, T, frequency)
     coupon = face_value * coupon_rate / frequency
     total_periods = int(T * frequency)
