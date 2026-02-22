@@ -10,14 +10,14 @@ sigma = 0.2 #volatility of stock
 
 def mc_call_price(S, K, T, r, sigma):
     Z = np.random.standard_normal(10000)
-    S_T = S * np.exp((r - 0.5*sigma**2)*T + sigma*(T**(0.5)*Z))
+    S_T = S * np.exp((r - 0.5*sigma**2)*T + sigma*((T**(0.5))*Z))
     payoff = np.maximum(S_T - K,0)
     price = np.exp(-r*T)*np.mean(payoff)
     return price
 
 def mc_put_price(S, K, T, r, sigma):
     Z = np.random.standard_normal(10000)
-    S_T = S * np.exp((r - 0.5*sigma**2)*T + sigma*(T**(0.5)*Z))
+    S_T = S * np.exp((r - 0.5*sigma**2)*T + sigma*((T**(0.5))*Z))
     payoff = np.maximum(K - S_T,0)
     price = np.exp(-r*T)*np.mean(payoff)
     return price

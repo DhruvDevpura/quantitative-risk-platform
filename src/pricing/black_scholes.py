@@ -22,9 +22,6 @@ def bs_put_price(S, K, T, r, sigma):
     p = (K*(np.exp(-r*T))*(norm.cdf(-d2))) - (S*(norm.cdf(-d1)))
     return p
 
-c = bs_call_price(S0,K,T,r,sigma)
-p = bs_put_price(S0,K,T,r,sigma)
-
 def put_call_parity(c,p,S,K,T,r):
     lhs = c + (K*(np.exp((-r)*T))) 
     rhs = p + S

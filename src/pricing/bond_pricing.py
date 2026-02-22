@@ -10,7 +10,7 @@ def bond_price(face_value, coupon_rate, r, T, frequency):
     coupon_payment_per_period = face_value * coupon_rate / frequency
     total_periods = int(T * frequency)
     for i in range(total_periods):
-        price += (coupon_payment_per_period/(1+(r/frequency))**(i+1))
+        price += coupon_payment_per_period / (1 + r/frequency)**(i+1)
     price += (face_value)/((1+(r/frequency))**(total_periods))
     return price
 
