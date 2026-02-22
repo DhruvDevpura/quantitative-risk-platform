@@ -8,7 +8,7 @@ market_price = 950
 def bond_price(face_value, coupon_rate, r, T, frequency):
     price = 0
     coupon_payment_per_period = face_value * coupon_rate / frequency
-    total_periods = T * frequency
+    total_periods = int(T * frequency)
     for i in range(total_periods):
         price += (coupon_payment_per_period/(1+(r/frequency))**(i+1))
     price += (face_value)/((1+(r/frequency))**(total_periods))
@@ -24,7 +24,23 @@ def yield_to_maturity(face_value, coupon_rate, market_price, T, frequency):
             break
     return r
 
-bp = bond_price(face_value, coupon_rate, r, T, frequency)
-ytm = yield_to_maturity(face_value, coupon_rate, market_price, T, frequency)
-print(bp)
-print(ytm)
+def duration(face_value, coupon_rate, r, T, frequency):
+    price = bond_price(face_value, coupon_rate, r, T, frequency)
+    coupon = face_value * coupon_rate / frequency
+    total_periods = int(T * frequency)
+    dur = 0
+    for i in range(1, total_periods + 1):
+        t = i / frequency  # time in years
+        pv = coupon / (1 + r/frequency)**i  # present value of this coupon
+        dur += t * pv
+    dur += T * face_value / (1 + r/frequency)**total_periods
+    dur = dur / price
+    return dur
+
+if __name__ == "__main__":
+    bp = bond_price(face_value, coupon_rate, r, T, frequency)
+    ytm = yield_to_maturity(face_value, coupon_rate, market_price, T, frequency)
+    dur = duration(face_value, coupon_rate, r, T, frequency)
+    print("Bond Price: ", bp)
+    print("YTM: ", ytm)
+    print("Duration: ", dur)
