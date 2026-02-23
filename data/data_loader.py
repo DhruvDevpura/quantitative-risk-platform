@@ -4,7 +4,7 @@ import numpy as np
 
 def download_data(tickers,period='2y'):
     #Download historical closing prices for given tickers.
-    data = yf.download(tickers, period=period)['Close']
+    data = yf.download(tickers, period=period,progress=False)['Close']
     return data
 
 def calculate_daily_returns(prices):
