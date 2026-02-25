@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def plot_var_comparison(port_returns, hist_var, param_var, mc_var):
-    """Plot histogram of portfolio returns with VaR lines."""
+    #Plot histogram of portfolio returns with VaR lines.
     plt.figure(figsize=(12, 6))
     plt.hist(port_returns, bins=50, alpha=0.7, color='skyblue', edgecolor='black')
     plt.axvline(hist_var, color='red', linestyle='--', linewidth=2, label=f'Historical VaR: {hist_var*100:.2f}%')
@@ -12,7 +12,7 @@ def plot_var_comparison(port_returns, hist_var, param_var, mc_var):
     plt.xlabel('Daily Returns')
     plt.ylabel('Frequency')
     plt.legend()
-    plt.savefig('var_comparison.png')
+    plt.savefig('docs/var_comparison.png')
     plt.show()
 
 if __name__ == "__main__":
