@@ -1,5 +1,7 @@
 # Quantitative Risk Analytics Platform
 
+**Live Demo:** [quantriskplatform.streamlit.app](https://quantriskplatform.streamlit.app)
+
 A risk management platform built from scratch in Python. Covers derivatives pricing, VaR modeling, portfolio optimization, and stress testing — applied on a real portfolio of Indian stocks using live market data from Yahoo Finance.
 
 Built to understand how risk is actually measured and managed at firms like banks and asset managers — not just the theory but the full implementation.
