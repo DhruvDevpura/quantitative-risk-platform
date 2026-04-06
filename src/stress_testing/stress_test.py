@@ -50,8 +50,9 @@ def plot_stress_comparison(normal_var, corr_var, vol_var):
     plt.title('VaR Under Stress Scenarios (95% Confidence)')
     for i, v in enumerate(values):
         plt.text(i, v + 0.05, f'{v:.2f}%', ha='center', fontweight='bold')
-    plt.savefig('docs/stress_test_comparison.png')
-    plt.show()
+    #plt.savefig('docs/stress_test_comparison.png')
+    #plt.show()
+    return plt.gcf()
 
 if __name__ == "__main__":
     import sys, os

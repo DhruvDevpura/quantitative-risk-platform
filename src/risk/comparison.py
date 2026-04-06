@@ -12,8 +12,9 @@ def plot_var_comparison(port_returns, hist_var, param_var, mc_var):
     plt.xlabel('Daily Returns')
     plt.ylabel('Frequency')
     plt.legend()
-    plt.savefig('docs/var_comparison.png')
-    plt.show()
+    #plt.savefig('docs/var_comparison.png')
+    #plt.show()
+    return plt.gcf()
 
 if __name__ == "__main__":
     import sys, os

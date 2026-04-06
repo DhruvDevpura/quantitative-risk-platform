@@ -16,8 +16,9 @@ def plot_weight_comparison(tickers, markowitz_w, bl_w, hrp_w):
     plt.title('Portfolio Optimization: Weight Comparison')
     plt.xticks(x, [t.replace('.NS', '') for t in tickers])
     plt.legend()
-    plt.savefig('docs/optimization_comparison.png')
-    plt.show()
+    #plt.savefig('docs/optimization_comparison.png')
+    #plt.show()
+    return plt.gcf()
 
 if __name__ == "__main__":
     import sys, os

@@ -51,8 +51,9 @@ def plot_backtest(returns, breach_dates, window=252):
     plt.xlabel('Trading Days')
     plt.ylabel('Daily Return')
     plt.legend()
-    plt.savefig('docs/var_backtest.png')
-    plt.show()
+    #plt.savefig('docs/var_backtest.png')
+    #plt.show()
+    return plt.gcf()
 
 if __name__ == "__main__":
     import sys, os

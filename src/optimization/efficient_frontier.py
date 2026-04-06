@@ -46,8 +46,9 @@ def plot_efficient_frontier(results, max_sharpe, min_vol):
     plt.xlabel('Annualized Volatility')
     plt.ylabel('Annualized Return')
     plt.legend()
-    plt.savefig('docs/efficient_frontier.png')
-    plt.show()
+    #plt.savefig('docs/efficient_frontier.png')
+    #plt.show()
+    return plt.gcf()
 
 if __name__ == "__main__":
     import sys, os

@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import norm
-from black_scholes import bs_call_price, bs_put_price
+from src.pricing.black_scholes import bs_call_price, bs_put_price
 
 S0 = 42 #stock price
 r = 0.1 #risk-free intrest rate

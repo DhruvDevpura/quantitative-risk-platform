@@ -41,8 +41,9 @@ def plot_greeks():
     
     plt.suptitle('Option Greeks Sensitivity (K=100, T=1yr, σ=20%)', fontsize=13)
     plt.tight_layout()
-    plt.savefig('docs/greeks_sensitivity.png')
-    plt.show()
+    #plt.savefig('docs/greeks_sensitivity.png')
+    #plt.show()
+    return plt.gcf()
 
 if __name__ == "__main__":
     plot_greeks()
