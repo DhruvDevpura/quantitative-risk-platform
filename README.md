@@ -1,10 +1,16 @@
 # Quantitative Risk Analytics Platform
 
-A risk management platform I built from scratch in Python. It covers derivatives pricing, VaR modeling, portfolio optimization, and stress testing — all applied on a real portfolio of 5 Indian stocks (Reliance, TCS, HDFC Bank, Infosys, ITC) using 2 years of daily market data.
+A risk management platform built from scratch in Python. Covers derivatives pricing, VaR modeling, portfolio optimization, and stress testing — applied on a real portfolio of Indian stocks using live market data from Yahoo Finance.
 
-The goal was to understand how risk is actually measured and managed, not just the theory but the implementation.
+Built to understand how risk is actually measured and managed at firms like banks and asset managers — not just the theory but the full implementation.
 
-> **Note:** Interactive Streamlit dashboard and final integration tests are coming soon.
+## Live Dashboard
+```bash
+pip install numpy scipy pandas matplotlib yfinance streamlit
+streamlit run dashboard.py
+```
+
+The dashboard connects all 4 phases — select any NSE tickers, adjust confidence level, and explore risk metrics, optimization methods, and stress scenarios interactively.
 
 ## Key Results
 
@@ -16,17 +22,17 @@ The goal was to understand how risk is actually measured and managed, not just t
 | COVID March 2020 Stress Loss | -20.30% |
 | VaR Backtest (Kupiec Test) | PASS |
 
-On a ₹10L portfolio, the worst expected daily loss is around ₹13,000 under normal conditions. Under a COVID-like crash, that jumps to ₹2L+ in a single month.
+On a ₹10L portfolio, worst expected daily loss is ~₹13,000 under normal conditions. Under a COVID-like crash, that jumps to ₹2L+ in a single month.
 
 ## What's Inside
 
 **Phase 1 — Pricing Engine:** Black-Scholes pricing, Greeks (Delta, Gamma, Vega, Theta, Rho) for calls and puts, Monte Carlo simulation, bond pricing with YTM and duration.
 
-**Phase 2 — Value-at-Risk:** Three approaches — Historical, Parametric, and Monte Carlo VaR using Cholesky decomposition for correlated simulations. Also includes CVaR, Sharpe ratio, Sortino ratio, and max drawdown.
+**Phase 2 — Value at Risk:** Historical, Parametric, and Monte Carlo VaR using Cholesky decomposition for correlated simulations. CVaR, Sharpe, Sortino, and max drawdown.
 
-**Phase 3 — Portfolio Optimization:** Markowitz efficient frontier, Black-Litterman model with investor views, and Hierarchical Risk Parity (HRP). Compared all three to show how each handles allocation differently.
+**Phase 3 — Portfolio Optimization:** Markowitz efficient frontier, Black-Litterman model with investor views, and Hierarchical Risk Parity. All three compared side by side.
 
-**Phase 4 — Stress Testing & Backtesting:** Correlation shocks, volatility shocks, COVID scenario replay. Rolling window VaR backtest validated with Kupiec's likelihood ratio test.
+**Phase 4 — Stress Testing:** Correlation shocks, volatility shocks, COVID scenario replay. Rolling window VaR backtest validated with Kupiec's likelihood ratio test.
 
 ## Visualizations
 
@@ -39,6 +45,7 @@ On a ₹10L portfolio, the worst expected daily loss is around ₹13,000 under n
 
 ## Project Structure
 ```
+├── dashboard.py
 ├── data/
 │   ├── data_loader.py
 │   └── portfolio.py
@@ -48,23 +55,24 @@ On a ₹10L portfolio, the worst expected daily loss is around ₹13,000 under n
 │   ├── optimization/
 │   └── stress_testing/
 ├── tests/
-├── docs/
-└── README.md
+└── docs/
 ```
 
 ## How to Run
 ```bash
-pip install numpy scipy pandas matplotlib yfinance
+pip install numpy scipy pandas matplotlib yfinance streamlit
 
-# run any module directly
+# Run the dashboard
+streamlit run dashboard.py
+
+# Run individual modules
 python3 src/risk/historical_var.py
 python3 src/optimization/efficient_frontier.py
-python3 src/stress_testing/stress_test.py
 
-# run all tests
+# Run all tests
 python3 -m pytest tests/ -v
 ```
 
 ## Built With
 
-Python, NumPy, SciPy, Pandas, Matplotlib, yfinance
+Python · NumPy · SciPy · Pandas · Matplotlib · yfinance · Streamlit
