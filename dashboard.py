@@ -24,20 +24,23 @@ from src.stress_testing.stress_test import historical_scenario, correlation_shoc
 from src.stress_testing.var_backtest import backtest_var, kupiec_test, plot_backtest
 
 from src.pricing.black_scholes import bs_call_price, bs_put_price, delta_call, delta_put, gamma, vega, theta_call, theta_put, rho_call, rho_put
-from src.pricing.black_scholes import bs_call_price, bs_put_price
 from src.pricing.bond_pricing import bond_price, yield_to_maturity, duration
 from src.pricing.monte_carlo import mc_call_price, mc_put_price
 
 st.set_page_config(layout="wide", page_title="Quant Risk Platform")
 
+BACKTEST_WINDOW = 252
+MIN_ASSETS_FOR_OPTIMISATION = 3
+
+
 @st.cache_data
-def load_data(tickers,period):
-    prices = download_data(list(tickers),period=period)
+def load_data(tickers, period):
+    prices = download_data(list(tickers), period=period)
     prices = clean_data(prices)
     returns = calculate_daily_returns(prices)
     n = len(tickers)
     weights = np.ones(n) / n
-    port_returns = build_portfolio(returns,weights)
+    port_returns = build_portfolio(returns, weights)
     cov = covariance_matrix(returns)
     mean_returns = returns.mean()
 
@@ -50,12 +53,14 @@ def load_data(tickers,period):
         "tickers": list(tickers)
     }
 
+
 @st.cache_data
 def load_crisis_data(tickers, start, end):
     prices = yf.download(list(tickers), start=start, end=end, progress=False)['Close']
     prices = clean_data(prices)
     returns = calculate_daily_returns(prices)
     return returns
+
 
 st.title("Quantitative Risk Analytics Platform")
 st.markdown("Built on real NSE market data · Black-Scholes · VaR · Portfolio Optimization · Stress Testing")
@@ -98,6 +103,12 @@ confidence = st.sidebar.slider(
 
 st.sidebar.info(f"Weights: equal across {len(selected_tickers)} tickers")
 
+# Guard must sit BEFORE load_data: an empty selection makes np.ones(0)/0 return
+# an empty weight vector and the download itself fail.
+if len(selected_tickers) == 0:
+    st.warning("Select at least one ticker.")
+    st.stop()
+
 data = load_data(tuple(selected_tickers), period)
 
 returns = data["returns"]
@@ -127,15 +138,15 @@ with tab1:
     nu = estimate_nu(port_returns)[0] if use_t else None
     if use_t:
         st.caption(f"Degrees of freedom fitted by MLE: ν = {nu:.2f}")
-    
+
     h_var = histo_var(port_returns, confidence)
     h_cvar = histo_cvar(port_returns, confidence)
     p_var = par_var(port_returns, confidence)
     p_cvar = par_cvar(port_returns, confidence)
-    m_var = mc_var(returns, weights, n_sim, confidence,dist=dist,nu=nu)
-    m_cvar = mc_cvar(returns, weights, n_sim, confidence,dist=dist,nu=nu)
+    m_var = mc_var(returns, weights, n_sim, confidence, dist=dist, nu=nu)
+    m_cvar = mc_cvar(returns, weights, n_sim, confidence, dist=dist, nu=nu)
 
-    fig = plot_var_comparison(port_returns, h_var, p_var, m_var,mc_label=f"Monte Carlo ({dist})")
+    fig = plot_var_comparison(port_returns, h_var, p_var, m_var, mc_label=f"Monte Carlo ({dist})")
     st.pyplot(fig)
     plt.close()
 
@@ -161,52 +172,62 @@ with tab1:
 
 with tab2:
     st.header("Portfolio Optimizer")
-    method = st.selectbox("Optimization Method",["Markowitz", "Black-Litterman", "HRP"])
+    method = st.selectbox("Optimization Method", ["Markowitz", "Black-Litterman", "HRP"])
 
-    if method == "Markowitz":
-        n_portfolios = st.slider("Simulated Portfolios", 1000, 10000, 5000, step=500)
-        results, weights_record = random_portfolios(n_portfolios, mean_returns, cov)
-        max_s, max_w = max_sharpe_portfolio(results, weights_record)
-        min_v, min_w = min_volatility_portfolio(results, weights_record)
-        fig = plot_efficient_frontier(results, max_s, min_v)
-        st.pyplot(fig)
-        plt.close()
-        st.subheader("Max Sharpe Portfolio Weights")
-        weight_df = pd.DataFrame({
-            "Ticker": [t.replace('.NS','') for t in tickers],
-            "Weight": [f"{w*100:.1f}%" for w in max_w]
-        })
-        st.dataframe(weight_df, use_container_width=True)
+    # HRP's hierarchical clustering and the Black-Litterman relative view both
+    # need at least three assets to be meaningful.
+    if len(tickers) < MIN_ASSETS_FOR_OPTIMISATION:
+        st.info(f"Portfolio optimisation needs at least {MIN_ASSETS_FOR_OPTIMISATION} assets.")
+    else:
+        if method == "Markowitz":
+            n_portfolios = st.slider("Simulated Portfolios", 1000, 10000, 5000, step=500)
+            results, weights_record = random_portfolios(n_portfolios, mean_returns, cov)
+            max_s, max_w = max_sharpe_portfolio(results, weights_record)
+            min_v, min_w = min_volatility_portfolio(results, weights_record)
+            fig = plot_efficient_frontier(results, max_s, min_v)
+            st.pyplot(fig)
+            plt.close()
+            st.subheader("Max Sharpe Portfolio Weights")
+            weight_df = pd.DataFrame({
+                "Ticker": [t.replace('.NS', '') for t in tickers],
+                "Weight": [f"{w*100:.1f}%" for w in max_w]
+            })
+            st.dataframe(weight_df, use_container_width=True)
 
-    elif method == "Black-Litterman":
-        n = len(tickers)
-        market_weights = np.ones(n) / n
-        P = np.array([[1, -1, 0, 0, 0, *[0]*(n-5)][:n]])  # RELIANCE outperforms TCS
-        Q = np.array([0.02])
-        cov_annual = cov.values * 252
-        combined = black_litterman(cov_annual, market_weights, P, Q)
-        bl_w = bl_optimal_weights(combined, cov_annual)
-        st.subheader("Black-Litterman Weights")
-        st.caption(f"View: {tickers[0].replace('.NS','')} outperforms market by 2%")
-        weight_df = pd.DataFrame({
-            "Ticker": [t.replace('.NS','') for t in tickers],
-            "Weight": [f"{w*100:.1f}%" for w in bl_w]
-        })
-        st.dataframe(weight_df, use_container_width=True)
-        chard_data = pd.DataFrame({"Weight": bl_w},index = [t.replace('.NS','') for t in tickers])
-        st.bar_chart(chard_data)
+        elif method == "Black-Litterman":
+            n = len(tickers)
+            market_weights = np.ones(n) / n
+            # P row [1, -1, 0, ...] is a RELATIVE view: asset 1 beats asset 2 by Q.
+            # An absolute view (asset 1 beats the market) would be [1, 0, 0, ...].
+            P = np.array([[1, -1, 0, 0, 0, *[0]*(n-5)][:n]])
+            Q = np.array([0.02])
+            cov_annual = cov.values * 252
+            combined = black_litterman(cov_annual, market_weights, P, Q)
+            bl_w = bl_optimal_weights(combined, cov_annual)
+            st.subheader("Black-Litterman Weights")
+            st.caption(
+                f"Relative view: {tickers[0].replace('.NS','')} outperforms "
+                f"{tickers[1].replace('.NS','')} by 2% p.a."
+            )
+            weight_df = pd.DataFrame({
+                "Ticker": [t.replace('.NS', '') for t in tickers],
+                "Weight": [f"{w*100:.1f}%" for w in bl_w]
+            })
+            st.dataframe(weight_df, use_container_width=True)
+            chart_data = pd.DataFrame({"Weight": bl_w}, index=[t.replace('.NS', '') for t in tickers])
+            st.bar_chart(chart_data)
 
-    elif method == "HRP":
-        hrp_weights = hrp(returns)
-        hrp_w = hrp_weights.values
-        st.subheader("HRP Weights")
-        weight_df = pd.DataFrame({
-            "Ticker": [t.replace('.NS','') for t in tickers],
-            "Weight": [f"{w*100:.1f}%" for w in hrp_w]})
-        
-        st.dataframe(weight_df, use_container_width=True)
-        chard_data = pd.DataFrame({"Weight": hrp_w},index = [t.replace('.NS','') for t in tickers])
-        st.bar_chart(chard_data)
+        elif method == "HRP":
+            hrp_weights = hrp(returns)
+            hrp_w = hrp_weights.values
+            st.subheader("HRP Weights")
+            weight_df = pd.DataFrame({
+                "Ticker": [t.replace('.NS', '') for t in tickers],
+                "Weight": [f"{w*100:.1f}%" for w in hrp_w]
+            })
+            st.dataframe(weight_df, use_container_width=True)
+            chart_data = pd.DataFrame({"Weight": hrp_w}, index=[t.replace('.NS', '') for t in tickers])
+            st.bar_chart(chart_data)
 
 with tab3:
     st.header("Stress Testing")
@@ -217,6 +238,10 @@ with tab3:
         shock_corr = st.slider("Correlation Shock", 0.5, 0.99, 0.9, step=0.05)
     with col2:
         vol_factor = st.slider("Volatility Shock Factor", 1.0, 5.0, 3.0, step=0.5)
+
+    st.caption(
+        "Shock magnitudes are illustrative, not calibrated to any historical episode."
+    )
 
     normal_var = stressed_var(returns, weights, cov.values)
     corr_cov = correlation_shock(cov.values, shock_corr)
@@ -246,28 +271,41 @@ with tab3:
 
     st.divider()
     st.subheader("VaR Backtest & Kupiec Test")
-    breaches, total, breach_dates = backtest_var(port_returns, confidence)
-    lr, passed = kupiec_test(breaches, total, confidence)
-    expected = int(total * (1 - confidence))
-
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Days Tested", total)
-    with col2:
-        st.metric("Expected Breaches", expected)
-    with col3:
-        st.metric("Actual Breaches", breaches)
-    with col4:
-        st.metric("Kupiec LR Stat", f"{lr:.4f}")
-
-    if passed:
-        st.success("✅ Model PASSED Kupiec Test — breach rate is statistically acceptable")
+    # Strictly more than BACKTEST_WINDOW observations are needed: with exactly
+    # 252, range(252, 252) is empty and total comes out zero.
+    if len(port_returns) <= BACKTEST_WINDOW:
+        st.warning(
+            f"VaR backtesting uses a {BACKTEST_WINDOW}-day rolling window and needs more "
+            f"than that. Current selection has {len(port_returns)} days — choose 2y or longer."
+        )
     else:
-        st.error("❌ Model FAILED Kupiec Test — too many VaR breaches")
+        breaches, total, breach_dates = backtest_var(port_returns, confidence)
+        lr, passed = kupiec_test(breaches, total, confidence)
+        expected = int(total * (1 - confidence))
 
-    fig = plot_backtest(port_returns, breach_dates)
-    st.pyplot(fig)
-    plt.close()
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Days Tested", total)
+        with col2:
+            st.metric("Expected Breaches", expected)
+        with col3:
+            st.metric("Actual Breaches", breaches)
+        with col4:
+            st.metric("Kupiec LR Stat", f"{lr:.4f}")
+
+        if passed:
+            st.success("Model PASSED Kupiec Test — breach rate is statistically acceptable")
+        else:
+            st.error("Model FAILED Kupiec Test — too many VaR breaches")
+
+        st.caption(
+            "Kupiec tests unconditional coverage only. It counts breaches; it cannot "
+            "detect whether they cluster in time."
+        )
+
+        fig = plot_backtest(port_returns, breach_dates)
+        st.pyplot(fig)
+        plt.close()
 
 with tab4:
     st.header("Options & Bonds")

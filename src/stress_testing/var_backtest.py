@@ -3,6 +3,8 @@ from scipy.stats import chi2
 
 def backtest_var(returns, confidence=0.95, window=252):
     #Rolling window VaR backtest using historical method.
+    if(len(returns)<window):
+        raise ValueError(f"Backtest needs more than {window} obs for the rolling window, got {len(returns)}")
     breaches = 0
     total = 0
     breach_dates = []
