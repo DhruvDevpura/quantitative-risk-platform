@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_var_comparison(port_returns, hist_var, param_var, mc_var):
+def plot_var_comparison(port_returns, hist_var, param_var, mc_var,mc_label="Monte Carlo"):
     #Plot histogram of portfolio returns with VaR lines.
     plt.figure(figsize=(12, 6))
     plt.hist(port_returns, bins=50, alpha=0.7, color='skyblue', edgecolor='black')
     plt.axvline(hist_var, color='red', linestyle='--', linewidth=2, label=f'Historical VaR: {hist_var*100:.2f}%')
     plt.axvline(param_var, color='green', linestyle='--', linewidth=2, label=f'Parametric VaR: {param_var*100:.2f}%')
-    plt.axvline(mc_var, color='orange', linestyle='--', linewidth=2, label=f'Monte Carlo VaR: {mc_var*100:.2f}%')
+    plt.axvline(mc_var, color='orange', linestyle='--', linewidth=2, label=f'{mc_label} VaR: {mc_var*100:.2f}%')
     plt.title('Portfolio Returns Distribution with VaR Estimates')
     plt.xlabel('Daily Returns')
     plt.ylabel('Frequency')

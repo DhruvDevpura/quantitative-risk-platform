@@ -11,7 +11,7 @@ from data.portfolio import build_portfolio, covariance_matrix
 
 from src.risk.historical_var import histo_var, histo_cvar
 from src.risk.parametric_var import par_var, par_cvar
-from src.risk.monte_carlo_var import mc_var, mc_cvar
+from src.risk.monte_carlo_var import mc_var, mc_cvar, estimate_nu
 from src.risk.risk_metrics import sharpe_ratio, sortino_ratio, max_drawdown
 from src.risk.comparison import plot_var_comparison
 
@@ -115,22 +115,27 @@ tab1, tab2, tab3, tab4 = st.tabs([
 ])
 
 with tab1:
-    st.header("Risk Analysis")
     col1, col2 = st.columns(2)
     with col1:
-        n_sim = st.slider("MC Simulations", 1000, 50000, 10000, step=1000)
+        n_sim = st.slider("MC Simulations", 1000, 200000, 50000, step=1000)
+        use_t = st.checkbox("Student-t returns (fat tails)", value=False)
     with col2:
         st.metric("Confidence Level", f"{confidence:.0%}")
         st.caption("Change in sidebar")
+
+    dist = "t" if use_t else "normal"
+    nu = estimate_nu(port_returns)[0] if use_t else None
+    if use_t:
+        st.caption(f"Degrees of freedom fitted by MLE: ν = {nu:.2f}")
     
     h_var = histo_var(port_returns, confidence)
     h_cvar = histo_cvar(port_returns, confidence)
     p_var = par_var(port_returns, confidence)
     p_cvar = par_cvar(port_returns, confidence)
-    m_var = mc_var(returns, weights, n_sim, confidence)
-    m_cvar = mc_cvar(returns, weights, n_sim, confidence)
+    m_var = mc_var(returns, weights, n_sim, confidence,dist=dist,nu=nu)
+    m_cvar = mc_cvar(returns, weights, n_sim, confidence,dist=dist,nu=nu)
 
-    fig = plot_var_comparison(port_returns, h_var, p_var, m_var)
+    fig = plot_var_comparison(port_returns, h_var, p_var, m_var,mc_label=f"Monte Carlo ({dist})")
     st.pyplot(fig)
     plt.close()
 
@@ -140,13 +145,13 @@ with tab1:
         st.subheader("Value at Risk")
         st.metric("Historical VaR", f"{h_var*100:.2f}%")
         st.metric("Parametric VaR", f"{p_var*100:.2f}%")
-        st.metric("Monte Carlo VaR", f"{m_var*100:.2f}%")
+        st.metric(f"Monte Carlo VaR ({dist})", f"{m_var*100:.2f}%")
 
     with col2:
         st.subheader("CVaR (Expected Shortfall)")
         st.metric("Historical CVaR", f"{h_cvar*100:.2f}%")
         st.metric("Parametric CVaR", f"{p_cvar*100:.2f}%")
-        st.metric("Monte Carlo CVaR", f"{m_cvar*100:.2f}%")
+        st.metric(f"Monte Carlo CVaR ({dist})", f"{m_cvar*100:.2f}%")
 
     with col3:
         st.subheader("Risk Metrics")
