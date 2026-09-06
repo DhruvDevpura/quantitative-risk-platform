@@ -25,19 +25,35 @@ The dashboard connects all 4 phases — select any NSE tickers, adjust confidenc
 | Monte Carlo CVaR (95%) | -1.96% | -2.07% |
 | Monte Carlo CVaR (99%) | -2.51% | -2.96% |
 
+Degrees of freedom are estimated from the data (MLE 7.56, method-of-moments 7.50). The two distributions are variance-matched, so the difference is tail shape alone. They cross at **96.61% confidence** — below that the normal is more conservative, above it the t is. Basel measures market-risk VaR at 99% and FRTB at 97.5% Expected Shortfall, both above the crossover: on this portfolio the normal assumption understates 99% Expected Shortfall by 18% (₹25,090 vs ₹29,570 on ₹10L).
+
+Historical CVaR at 95% (−2.07%) matches the t model (−2.07%) rather than the normal (−1.96%). That is supportive since the historical method assumes no distribution — though with roughly 25 observations in the tail, a two-year sample cannot separate them decisively.
+
 | Metric | Value |
 |--------|-------|
 | Historical VaR (95%) | -1.56% |
-| Historical CVaR (95%)| -2.07% |
+| Historical CVaR (95%) | -2.07% |
 | Parametric VaR (95%) | -1.57% |
 | COVID March 2020 Replay | -20.30% |
-| Historical VaR Backtest — Kupiec, 2y window | **FAIL** — 22 breaches vs 12 expected (8.9%), LR 6.42 |
-| Historical VaR Backtest — Kupiec, 5y window | PASS — 55 breaches vs 49 expected (5.6%), LR 0.66 |
 
-Degrees of freedom are estimated from the data (MLE 7.56, method-of-moments 7.50). The two distributions are variance-matched, so the difference is tail shape alone. They cross at **96.61% confidence** — below that the normal is more conservative, above it the t is. Basel measures market-risk VaR at 99% and FRTB at 97.5% Expected Shortfall, both above the crossover: on this portfolio the normal assumption understates 99% Expected Shortfall by 18% (₹25,090 vs ₹29,570 on ₹10L).
-Historical CVaR at 95% (−2.07%) matches the t model (−2.07%) rather than the normal (−1.96%). That is supportive since the historical method assumes no distribution — though with roughly 25 observations in the tail, a two-year sample cannot separate them decisively.
+### Backtesting Historical VaR (95%, 252-day rolling window)
 
-The 2-year result uses the 30/25/20/15/10 weights; the 5-year result uses equal weights from the dashboard, so the two are not strictly comparable. What is comparable is the direction: unconditional coverage passes over five years and fails over the most recent two, meaning the breaches are not uniformly distributed in time. Kupiec cannot detect that — it counts breaches without regard to when they occur. Christoffersen's independence test is the correct instrument and is not yet implemented.
+| Test | Statistic | df | Result |
+|------|-----------|----|--------|
+| Kupiec unconditional coverage | LR = 6.42 (p = 0.011) | 1 | **REJECT** |
+| Christoffersen independence | LR = 0.59 (p = 0.44) | 1 | do not reject |
+| Conditional coverage | LR = 7.01 (p = 0.030) | 2 | **REJECT** |
+
+248 days tested, 22 breaches against 12 expected (8.9% realised vs 5% target). The model breaches too often.
+
+Transition counts: n₀₀=206, n₀₁=19, n₁₀=19, n₁₁=3, giving π₀₁ = 0.084 and π₁₁ = 0.136. Breaches are directionally more likely the day after a breach, but nowhere near significantly so: under independence 1.96 consecutive pairs are expected and 3 were observed, and n₁₁ would need to reach 5 before the test rejects. The independence test has almost no power at this sample size.
+
+Conditional coverage rejects, but 92% of that statistic comes from the coverage component — the rejection is driven by *how many* breaches occurred, not *when*. Attributing it to clustering would be wrong.
+
+The breach plot shows visible clustering over weeks and months, which a first-order Markov test cannot detect. A duration-based test (Christoffersen & Pelletier, 2004), which models time between breaches, would be the correct instrument. Not implemented.
+
+On a 5-year window the same model passes Kupiec (55 breaches vs 49 expected, LR 0.66). Unconditional coverage over five years conceals a two-year stretch where the model is badly miscalibrated — which is itself an argument for conditional testing.
+
 ## What's Inside
 
 **Phase 1 — Pricing Engine:** Black-Scholes pricing, Greeks (Delta, Gamma, Vega, Theta, Rho) for calls and puts, Monte Carlo simulation, bond pricing with YTM and duration.

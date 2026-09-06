@@ -21,7 +21,7 @@ from src.optimization.hrp import hrp
 from src.optimization.optimization_comparison import plot_weight_comparison
 
 from src.stress_testing.stress_test import historical_scenario, correlation_shock, volatility_shock, stressed_var, plot_stress_comparison
-from src.stress_testing.var_backtest import backtest_var, kupiec_test, plot_backtest
+from src.stress_testing.var_backtest import backtest_var, kupiec_test, christoffersen_test, plot_backtest
 
 from src.pricing.black_scholes import bs_call_price, bs_put_price, delta_call, delta_put, gamma, vega, theta_call, theta_put, rho_call, rho_put
 from src.pricing.bond_pricing import bond_price, yield_to_maturity, duration
@@ -301,6 +301,26 @@ with tab3:
         st.caption(
             "Kupiec tests unconditional coverage only. It counts breaches; it cannot "
             "detect whether they cluster in time."
+        )
+        lr_ind, ind_passed, lr_cc, cc_passed, tr = christoffersen_test(breach_dates, total)
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("P(breach | no breach yesterday)", f"{tr['pi01']:.3f}")
+        with col2:
+            st.metric("P(breach | breach yesterday)", f"{tr['pi11']:.3f}")
+        with col3:
+            st.metric("Christoffersen LR_ind", f"{lr_ind:.4f}")
+
+        if ind_passed:
+            st.success("Independence PASSED — no first-order clustering detected")
+        else:
+            st.error("Independence FAILED — breaches cluster day-to-day")
+
+        st.metric("Conditional coverage LR_cc", f"{lr_cc:.4f}")
+        st.caption(
+            "The independence test only detects day-to-day clustering. Clustering "
+            "spread over weeks passes it — a duration-based test would be needed."
         )
 
         fig = plot_backtest(port_returns, breach_dates)
