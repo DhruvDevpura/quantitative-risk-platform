@@ -1,6 +1,7 @@
 import sys
 import os
 import numpy as np
+import pytest
 
 #Add paths
 sys.path.insert(0, 'data')
@@ -10,7 +11,7 @@ from data_loader import download_data, clean_data, calculate_daily_returns
 from portfolio import build_portfolio, covariance_matrix
 from historical_var import histo_var, histo_cvar
 from parametric_var import par_var, par_cvar
-from monte_carlo_var import mc_var, mc_cvar
+from monte_carlo_var import mc_var, mc_cvar, simulate_returns, estimate_nu
 from risk_metrics import sharpe_ratio, sortino_ratio, max_drawdown
 
 #Load data once
@@ -43,6 +44,27 @@ def test_mc_var_close_to_parametric():
     m = mc_var(returns, weights)
     p = par_var(port_returns)
     assert abs(m - p) / abs(p) < 0.3
+
+def test_t_rejects_nu_below_2():
+    with pytest.raises(ValueError):
+        simulate_returns(returns,weights,n_sim=100,dist="t",nu=2)
+
+def test_t_rejects_missing_nu():
+    with pytest.raises(ValueError):
+        simulate_returns(returns,weights,n_sim=100,dist="t",nu=None)
+
+def test_unknown_dist_rejected():
+    with pytest.raises(ValueError):
+        simulate_returns(returns,weights,n_sim=100,dist="lognormal")
+
+def test_t_and_normal_have_same_variance():
+    sn = simulate_returns(returns,weights,n_sim = 200,dist="normal").std()
+    st = simulate_returns(returns,weights,n_sim = 200,dist="t",nu=5.0).std()
+    assert abs(sn-st)/sn < 0.02
+    
+def test_estimate_nu_positive():
+    nu_mle,_ = estimate_nu(port_returns)
+    assert nu_mle > 2
 
 # Risk metrics tests
 def test_sharpe_is_finite():

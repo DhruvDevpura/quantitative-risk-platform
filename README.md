@@ -16,15 +16,25 @@ The dashboard connects all 4 phases — select any NSE tickers, adjust confidenc
 
 ## Key Results
 
+*Portfolio: 5 NSE large-caps (30/25/20/15/10). Rolling 2-year window, as of 2026-09-04. Prices dividend-adjusted.*
+
+| Metric | Normal | Student-t (ν≈7.6) |
+|--------|--------|-------------------|
+| Monte Carlo VaR (95%) | -1.57% | -1.54% |
+| Monte Carlo VaR (99%) | -2.20% | -2.39% |
+| Monte Carlo CVaR (95%) | -1.96% | -2.07% |
+| Monte Carlo CVaR (99%) | -2.51% | -2.96% |
+
 | Metric | Value |
 |--------|-------|
-| Historical VaR (95%) | -1.30% |
-| Parametric VaR (95%) | -1.37% |
-| Monte Carlo VaR (95%) | -1.39% |
-| COVID March 2020 Stress Loss | -20.30% |
-| VaR Backtest (Kupiec Test) | PASS |
+| Historical VaR (95%) | -1.56% |
+| Historical CVaR (95%)| -2.07% |
+| Parametric VaR (95%) | -1.57% |
+| COVID March 2020 Replay | -20.30% |
+| Historical VaR Backtest (Kupiec) | PASS |
 
-On a ₹10L portfolio, worst expected daily loss is ~₹13,000 under normal conditions. Under a COVID-like crash, that jumps to ₹2L+ in a single month.
+Degrees of freedom are estimated from the data (MLE 7.56, method-of-moments 7.50). The two distributions are variance-matched, so the difference is tail shape alone. They cross at **96.61% confidence** — below that the normal is more conservative, above it the t is. Basel measures market-risk VaR at 99% and FRTB at 97.5% Expected Shortfall, both above the crossover: on this portfolio the normal assumption understates 99% Expected Shortfall by 18% (₹25,090 vs ₹29,570 on ₹10L).
+Historical CVaR at 95% (−2.07%) matches the t model (−2.07%) rather than the normal (−1.96%). That is supportive since the historical method assumes no distribution — though with roughly 25 observations in the tail, a two-year sample cannot separate them decisively.
 
 ## What's Inside
 
