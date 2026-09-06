@@ -31,11 +31,13 @@ The dashboard connects all 4 phases — select any NSE tickers, adjust confidenc
 | Historical CVaR (95%)| -2.07% |
 | Parametric VaR (95%) | -1.57% |
 | COVID March 2020 Replay | -20.30% |
-| Historical VaR Backtest (Kupiec) | PASS |
+| Historical VaR Backtest — Kupiec, 2y window | **FAIL** — 22 breaches vs 12 expected (8.9%), LR 6.42 |
+| Historical VaR Backtest — Kupiec, 5y window | PASS — 55 breaches vs 49 expected (5.6%), LR 0.66 |
 
 Degrees of freedom are estimated from the data (MLE 7.56, method-of-moments 7.50). The two distributions are variance-matched, so the difference is tail shape alone. They cross at **96.61% confidence** — below that the normal is more conservative, above it the t is. Basel measures market-risk VaR at 99% and FRTB at 97.5% Expected Shortfall, both above the crossover: on this portfolio the normal assumption understates 99% Expected Shortfall by 18% (₹25,090 vs ₹29,570 on ₹10L).
 Historical CVaR at 95% (−2.07%) matches the t model (−2.07%) rather than the normal (−1.96%). That is supportive since the historical method assumes no distribution — though with roughly 25 observations in the tail, a two-year sample cannot separate them decisively.
 
+The 2-year result uses the 30/25/20/15/10 weights; the 5-year result uses equal weights from the dashboard, so the two are not strictly comparable. What is comparable is the direction: unconditional coverage passes over five years and fails over the most recent two, meaning the breaches are not uniformly distributed in time. Kupiec cannot detect that — it counts breaches without regard to when they occur. Christoffersen's independence test is the correct instrument and is not yet implemented.
 ## What's Inside
 
 **Phase 1 — Pricing Engine:** Black-Scholes pricing, Greeks (Delta, Gamma, Vega, Theta, Rho) for calls and puts, Monte Carlo simulation, bond pricing with YTM and duration.
