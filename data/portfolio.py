@@ -6,7 +6,7 @@ def build_portfolio(returns, weights):
     portfolio_returns = returns.dot(weights)
     return portfolio_returns
 
-def covariance_matrix(returns):
+def ann_covariance_matrix(returns):
     #Calculate annualized covariance matrix of stock returns.
     cov = returns.cov() * 252
     return cov
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     prices = clean_data(prices)
     returns = calculate_daily_returns(prices)
     port_returns = build_portfolio(returns, weights)
-    cov = covariance_matrix(returns)
+    cov = ann_covariance_matrix(returns)
     print("Portfolio returns (first 5 days):")
     print(port_returns.head())
     print("Covariance matrix:")

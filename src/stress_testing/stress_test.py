@@ -20,14 +20,15 @@ def volatility_shock(cov_matrix, factor=3.0):
     #Multiply covariance matrix by stress factor.
     return cov_matrix * factor
 
-def stressed_var(returns, weights, stressed_cov, n_simulations=10000, confidence=0.95):
+def stressed_var(returns, weights, stressed_cov, n_simulations=10000, confidence=0.95,seed=1):
     #Calculate Monte Carlo VaR using stressed covariance matrix.
+    rng = np.random.default_rng(seed)
     mean_returns = returns.mean().values
     L = np.linalg.cholesky(stressed_cov)
     
     portfolio_returns = []
     for i in range(n_simulations):
-        Z = np.random.standard_normal(len(weights))
+        Z = rng.standard_normal(len(weights))
         correlated = mean_returns + L @ Z
         port_return = np.dot(weights, correlated)
         portfolio_returns.append(port_return)
@@ -88,6 +89,7 @@ if __name__ == "__main__":
     cum_loss, worst_day = historical_scenario(covid_returns, weights, covid_returns)
     
     print("=== Stress Test Results ===")
+    print("Shock magnitudes are illustrative, not calibrated to any historical episode.\n")
     print(f"\nNormal VaR (95%):              {normal_var*100:.2f}%")
     print(f"Correlation Shock VaR (0.9):   {corr_var*100:.2f}%")
     print(f"Volatility Shock VaR (3x):     {vol_var*100:.2f}%")

@@ -20,16 +20,17 @@ def mc_cvar(returns, weights, n_sim=10000, confidence=0.95, dist="normal",nu=Non
     return port[port <= var].mean()
 
 
-def simulate_returns(returns,weights,n_sim=10000,dist="normal",nu = None):
+def simulate_returns(returns,weights,n_sim=10000,dist="normal",nu = None,seed=1):
     #Simulate n portfolio returns.
     #dist = "normal" - multivariate normal , cov = sigma
     #dist = "t" - multivariate t with nu df, cov = sigma 
+    rng = np.random.default_rng(seed)
     mean_returns = returns.mean().values
     cov_matrix = returns.cov().values
 
     if dist=="normal":
         L = np.linalg.cholesky(cov_matrix)
-        Z = np.random.standard_normal((n_sim,len(weights)))
+        Z = rng.standard_normal((n_sim,len(weights)))
 
         asset_draws = mean_returns + Z@L.T
         portfolio_returns = asset_draws@weights
@@ -40,8 +41,8 @@ def simulate_returns(returns,weights,n_sim=10000,dist="normal",nu = None):
             raise ValueError(f"t simulation needs nu>2 (variance undefined) got {nu}")
         
         L = np.linalg.cholesky(cov_matrix) * np.sqrt((nu-2)/nu)
-        Z = np.random.standard_normal((n_sim,len(weights)))
-        W = np.random.chisquare(nu,size=(n_sim,1))
+        Z = rng.standard_normal((n_sim,len(weights)))
+        W = rng.chisquare(nu,size=(n_sim,1))
 
         asset_draws = mean_returns + (Z@L.T) * np.sqrt(nu/W)
         portfolio_returns = asset_draws@weights

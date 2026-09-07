@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import yfinance as yf
 from data.data_loader import download_data, clean_data, calculate_daily_returns
-from data.portfolio import build_portfolio, covariance_matrix
+from data.portfolio import build_portfolio, ann_covariance_matrix
 
 from src.risk.historical_var import histo_var, histo_cvar
 from src.risk.parametric_var import par_var, par_cvar
@@ -41,7 +41,7 @@ def load_data(tickers, period):
     n = len(tickers)
     weights = np.ones(n) / n
     port_returns = build_portfolio(returns, weights)
-    cov = covariance_matrix(returns)
+    cov = returns.cov()
     mean_returns = returns.mean()
 
     return {

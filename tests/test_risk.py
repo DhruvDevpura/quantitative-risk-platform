@@ -8,7 +8,7 @@ sys.path.insert(0, 'data')
 sys.path.insert(0, 'src/risk')
 
 from data_loader import download_data, clean_data, calculate_daily_returns
-from portfolio import build_portfolio, covariance_matrix
+from portfolio import build_portfolio, ann_covariance_matrix
 from historical_var import histo_var, histo_cvar
 from parametric_var import par_var, par_cvar
 from monte_carlo_var import mc_var, mc_cvar, simulate_returns, estimate_nu
@@ -86,7 +86,7 @@ def test_weights_sum_to_one():
     assert abs(weights.sum() - 1.0) < 0.0001
 
 def test_covariance_matrix_symmetric():
-    cov = covariance_matrix(returns)
+    cov = ann_covariance_matrix(returns)
     assert np.allclose(cov, cov.T)
 
 def test_portfolio_returns_length():
