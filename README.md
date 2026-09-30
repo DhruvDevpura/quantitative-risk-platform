@@ -1,108 +1,123 @@
 # Quantitative Risk Analytics Platform
 
-**Live Demo:** [quantriskplatform.streamlit.app](https://quantriskplatform.streamlit.app)
+**Live demo:** [quantriskplatform.streamlit.app](https://quantriskplatform.streamlit.app)
 
-A risk management platform built from scratch in Python. Covers derivatives pricing, VaR modeling, portfolio optimization, and stress testing — applied on a real portfolio of Indian stocks using live market data from Yahoo Finance.
+Value-at-Risk, VaR backtesting, portfolio optimisation and stress testing, written in Python and run on a five-stock NSE portfolio. The results below include the ones where the model fails, and the assumptions section lists what the numbers depend on.
 
-Built to understand how risk is actually measured and managed at firms like banks and asset managers — not just the theory but the full implementation.
+## Portfolio and data
 
-## Live Dashboard
-```bash
-pip install numpy scipy pandas matplotlib yfinance streamlit
-streamlit run dashboard.py
-```
+| | |
+|---|---|
+| Stocks | RELIANCE.NS, TCS.NS, HDFCBANK.NS, INFY.NS, ITC.NS |
+| Weights | 30 / 25 / 20 / 15 / 10, fixed |
+| Window | Rolling 2 years, 500 trading days, 2024-09-05 to 2026-09-04 |
+| Data | Yahoo Finance via `yfinance`, dividend-adjusted closes (`auto_adjust=True`) |
+| Returns | Simple daily returns; portfolio return is `returns @ weights` |
 
-The dashboard connects all 4 phases — select any NSE tickers, adjust confidence level, and explore risk metrics, optimization methods, and stress scenarios interactively.
+Daily mean return is −0.0572% and daily volatility is 0.9227%, which annualises to 14.6%. That is roughly index-level volatility, not a low-risk portfolio.
 
-## Key Results
+The dashboard lets you pick any NSE tickers, but it uses **equal weights** across whatever you select. The figures in this README come from the fixed 30/25/20/15/10 portfolio in `data/portfolio.py`, so the two will not match.
 
-*Portfolio: 5 NSE large-caps (30/25/20/15/10). Rolling 2-year window, as of 2026-09-04. Prices dividend-adjusted.*
+## Key results
 
-| Metric | Normal | Student-t (ν≈7.6) |
-|--------|--------|-------------------|
-| Monte Carlo VaR (95%) | -1.57% | -1.54% |
-| Monte Carlo VaR (99%) | -2.20% | -2.39% |
-| Monte Carlo CVaR (95%) | -1.96% | -2.07% |
-| Monte Carlo CVaR (99%) | -2.51% | -2.96% |
+### Monte Carlo VaR: normal vs Student-t
 
-Degrees of freedom are estimated from the data (MLE 7.56, method-of-moments 7.50). The two distributions are variance-matched, so the difference is tail shape alone. They cross at **96.61% confidence** — below that the normal is more conservative, above it the t is. Basel measures market-risk VaR at 99% and FRTB at 97.5% Expected Shortfall, both above the crossover: on this portfolio the normal assumption understates 99% Expected Shortfall by 18% (₹25,090 vs ₹29,570 on ₹10L).
+| Metric | Normal | Student-t (ν ≈ 7.6) |
+|--------|--------|---------------------|
+| VaR 95% | −1.57% | −1.54% |
+| VaR 99% | −2.20% | −2.39% |
+| CVaR 95% | −1.96% | −2.07% |
+| CVaR 99% | −2.51% | −2.96% |
 
-Historical CVaR at 95% (−2.07%) matches the t model (−2.07%) rather than the normal (−1.96%). That is supportive since the historical method assumes no distribution — though with roughly 25 observations in the tail, a two-year sample cannot separate them decisively.
+Degrees of freedom are estimated from the data (MLE 7.56, method of moments 7.50). The t simulation uses one χ² draw per path shared across all five assets, and it rescales the Cholesky factor by √((ν−2)/ν) so both models have the same covariance. The difference between the two columns is therefore tail shape alone.
+
+The two models cross at **96.61% confidence**. Below that level the normal model is more conservative, and above it the t model is. Basel market-risk VaR is set at 99% and FRTB Expected Shortfall at 97.5%, both above the crossover. On this portfolio, the normal assumption understates 99% Expected Shortfall by 18%: ₹25,090 against ₹29,570 on ₹10 lakh.
+
+### Historical and parametric
 
 | Metric | Value |
 |--------|-------|
-| Historical VaR (95%) | -1.56% |
-| Historical CVaR (95%) | -2.07% |
-| Parametric VaR (95%) | -1.57% |
-| COVID March 2020 Replay | -20.30% |
+| Historical VaR 95% | −1.56% |
+| Historical CVaR 95% | −2.07% |
+| Parametric VaR 95% | −1.57% |
+| COVID March 2020 replay | −20.30% |
 
-### Backtesting Historical VaR (95%, 252-day rolling window)
+Historical CVaR at 95% (−2.07%) lines up with the t model rather than the normal (−1.96%). Historical simulation assumes no distribution, so this supports the t model. It is not decisive, because there are only about 25 observations in the tail.
+
+### Backtest: historical VaR 95%, 252-day rolling window
 
 | Test | Statistic | df | Result |
 |------|-----------|----|--------|
-| Kupiec unconditional coverage | LR = 6.42 (p = 0.011) | 1 | **REJECT** |
-| Christoffersen independence | LR = 0.59 (p = 0.44) | 1 | do not reject |
-| Conditional coverage | LR = 7.01 (p = 0.030) | 2 | **REJECT** |
+| Kupiec unconditional coverage | LR = 6.42 (p = 0.011) | 1 | **Reject** |
+| Christoffersen independence | LR = 0.59 (p = 0.44) | 1 | Do not reject |
+| Conditional coverage | LR = 7.01 (p = 0.030) | 2 | **Reject** |
 
-248 days tested, 22 breaches against 12 expected (8.9% realised vs 5% target). The model breaches too often.
+Over 248 test days there were 22 breaches against 12 expected, a realised rate of 8.9% against a 5% target. The model breaches too often.
 
-Transition counts: n₀₀=206, n₀₁=19, n₁₀=19, n₁₁=3, giving π₀₁ = 0.084 and π₁₁ = 0.136. Breaches are directionally more likely the day after a breach, but nowhere near significantly so: under independence 1.96 consecutive pairs are expected and 3 were observed, and n₁₁ would need to reach 5 before the test rejects. The independence test has almost no power at this sample size.
+The transition counts were n₀₀ = 206, n₀₁ = 19, n₁₀ = 19 and n₁₁ = 3, which gives π₀₁ = 0.084 and π₁₁ = 0.136. A breach is somewhat more likely the day after a breach, but not significantly so. Under independence, 1.96 back-to-back breaches are expected and 3 were observed. n₁₁ would have to reach 5 before the test rejects, so the independence test has very little power at this sample size.
 
-Conditional coverage rejects, but 92% of that statistic comes from the coverage component — the rejection is driven by *how many* breaches occurred, not *when*. Attributing it to clustering would be wrong.
+Conditional coverage rejects, but 92% of its statistic comes from the coverage component. The rejection is about *how many* breaches there were, not *when* they happened, so attributing it to clustering would be wrong.
 
-The breach plot shows visible clustering over weeks and months, which a first-order Markov test cannot detect. A duration-based test (Christoffersen & Pelletier, 2004), which models time between breaches, would be the correct instrument. Not implemented.
+The breach plot does show clustering over weeks and months. A first-order Markov test cannot detect that. A duration-based test (Christoffersen and Pelletier, 2004) would be the right tool, and it is not implemented.
 
-On a 5-year window the same model passes Kupiec (55 breaches vs 49 expected, LR 0.66). Unconditional coverage over five years conceals a two-year stretch where the model is badly miscalibrated — which is itself an argument for conditional testing.
+On a 5-year window the same model passes Kupiec (55 breaches against 49 expected, LR 0.66). Five years of unconditional coverage hides a two-year stretch of clear miscalibration.
 
-## What's Inside
+## Assumptions and limitations
 
-**Phase 1 — Pricing Engine:** Black-Scholes pricing, Greeks (Delta, Gamma, Vega, Theta, Rho) for calls and puts, Monte Carlo simulation, bond pricing with YTM and duration.
+| Assumption | Where it enters | Effect |
+|---|---|---|
+| Fixed weights, meaning costless daily rebalancing back to target | Every portfolio return series | Ignores transaction costs and suppresses realised volatility, so every VaR figure here is somewhat optimistic. Not yet quantified; the fix is a buy-and-hold rerun. |
+| Dividend-adjusted closes | Data download | The whole price history is restated after each future dividend, so results are not point-in-time reproducible. |
+| Five stocks chosen with 2026 hindsight | Universe | Survivorship bias. |
+| TCS and INFY together are 40% of the weight | Universe | Both are exposed to the same sector, so the portfolio is closer to four bets than five. |
+| Weights are illustrative | Portfolio construction | They are neither market-cap nor risk-based. The effective number of names (inverse Herfindahl) is 4.44. |
+| Tail estimates rest on few points | Historical VaR/CVaR | 99% VaR is the 5th worst of 500 days, so one bad price in a free data feed can move it materially. |
+| Mean return is not estimable from 500 days | All expected-return inputs | The standard error of the daily mean is 0.041%, giving t = −1.39. The 95% interval on annualised drift runs from about −35% to +6%. Volatility is estimable from this sample and drift is not. |
+| Stress parameters (ρ = 0.9, volatility × 3) | Stress testing | These are illustrative, not calibrated. The COVID replay is the calibrated scenario. |
 
-**Phase 2 — Value at Risk:** Historical, Parametric, and Monte Carlo VaR using Cholesky decomposition for correlated simulations. CVaR, Sharpe, Sortino, and max drawdown.
+## What's in the repo
 
-**Phase 3 — Portfolio Optimization:** Markowitz efficient frontier, Black-Litterman model with investor views, and Hierarchical Risk Parity. All three compared side by side.
+**Risk (`src/risk/`):** historical, parametric and Monte Carlo VaR and CVaR. Monte Carlo supports multivariate normal and multivariate Student-t, with ν estimated by MLE and by method of moments. The module also computes Sharpe, Sortino and maximum drawdown.
 
-**Phase 4 — Stress Testing:** Correlation shocks, volatility shocks, COVID scenario replay. Rolling window VaR backtest validated with Kupiec's likelihood ratio test.
+**Backtesting (`src/stress_testing/var_backtest.py`):** a rolling-window VaR backtest with the Kupiec, Christoffersen independence and conditional coverage tests.
 
-## Visualizations
+**Optimisation (`src/optimization/`):** a Markowitz frontier approximated by sampling random long-only portfolios, Black-Litterman with a relative view, and Hierarchical Risk Parity, with a weight comparison across the three.
 
-![VaR Comparison](docs/var_comparison.png)
-![Efficient Frontier](docs/efficient_frontier.png)
-![Optimization Comparison](docs/optimization_comparison.png)
-![Stress Tests](docs/stress_test_comparison.png)
-![VaR Backtest](docs/var_backtest.png)
+**Stress testing (`src/stress_testing/stress_test.py`):** a correlation shock, a volatility shock, and a replay of March 2020 returns.
+
+**Pricing (`src/pricing/`):** Black-Scholes prices and Greeks for calls and puts, a put-call parity check, Monte Carlo option pricing, and bond price, yield to maturity and duration.
+
+## Figures
+
+![VaR comparison](docs/var_comparison.png)
+![VaR backtest](docs/var_backtest.png)
+![Stress tests](docs/stress_test_comparison.png)
+![Efficient frontier](docs/efficient_frontier.png)
+![Optimisation comparison](docs/optimization_comparison.png)
 ![Greeks](docs/greeks_sensitivity.png)
 
-## Project Structure
+## Running it
+
+```bash
+pip install -r requirements.txt
+
+streamlit run dashboard.py                  # dashboard
+python3 src/risk/historical_var.py          # single module
+python3 -m pytest tests/ -v                 # tests
+```
+
+The tests download live data from Yahoo Finance, so they need a network connection.
+
+## Layout
+
 ```
 ├── dashboard.py
-├── data/
-│   ├── data_loader.py
-│   └── portfolio.py
+├── data/            data_loader.py, portfolio.py
 ├── src/
-│   ├── pricing/
 │   ├── risk/
+│   ├── stress_testing/
 │   ├── optimization/
-│   └── stress_testing/
+│   └── pricing/
 ├── tests/
-└── docs/
+└── docs/            figures
 ```
-
-## How to Run
-```bash
-pip install numpy scipy pandas matplotlib yfinance streamlit
-
-# Run the dashboard
-streamlit run dashboard.py
-
-# Run individual modules
-python3 src/risk/historical_var.py
-python3 src/optimization/efficient_frontier.py
-
-# Run all tests
-python3 -m pytest tests/ -v
-```
-
-## Built With
-
-Python · NumPy · SciPy · Pandas · Matplotlib · yfinance · Streamlit
