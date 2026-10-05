@@ -8,20 +8,28 @@ K = 40 #strike price
 T = 0.5 #time in years
 sigma = 0.2 #volatility of stock
 
-def mc_call_price(S, K, T, r, sigma):
+def mc_call_price(S, K, T, r, sigma, n_sims=10000, seed=None, return_se=False):
     #Calculate European call option price using Monte Carlo simulation.
-    Z = np.random.standard_normal(10000)
+    rng = np.random.default_rng(seed)
+    Z = rng.standard_normal(n_sims)
     S_T = S * np.exp((r - 0.5*sigma**2)*T + sigma*((T**(0.5))*Z))
-    payoff = np.maximum(S_T - K,0)
-    price = np.exp(-r*T)*np.mean(payoff)
+    disc_payoff = np.exp(-r*T) * np.maximum(S_T - K, 0)
+    price = np.mean(disc_payoff)
+    if return_se:
+        se = np.std(disc_payoff, ddof=1) / np.sqrt(n_sims)
+        return price, se
     return price
 
-def mc_put_price(S, K, T, r, sigma):
+def mc_put_price(S, K, T, r, sigma, n_sims=10000, seed=None, return_se=False):
     #Calculate European put option price using Monte Carlo simulation.
-    Z = np.random.standard_normal(10000)
+    rng = np.random.default_rng(seed)
+    Z = rng.standard_normal(n_sims)
     S_T = S * np.exp((r - 0.5*sigma**2)*T + sigma*((T**(0.5))*Z))
-    payoff = np.maximum(K - S_T,0)
-    price = np.exp(-r*T)*np.mean(payoff)
+    disc_payoff = np.exp(-r*T) * np.maximum(K - S_T, 0)
+    price = np.mean(disc_payoff)
+    if return_se:
+        se = np.std(disc_payoff, ddof=1) / np.sqrt(n_sims)
+        return price, se
     return price
 
 if __name__ == "__main__":
