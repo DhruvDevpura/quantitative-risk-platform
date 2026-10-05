@@ -26,12 +26,13 @@ def kupiec_test(breaches, total, confidence=0.95):
     p = 1 - confidence  #expected breach rate
     p_hat = breaches / total  #actual breach rate
     
-    if p_hat == 0 or p_hat == 1:
-        return 0, True
-    
-    lr = -2 * (np.log((1-p)**(total-breaches) * p**breaches) - 
-               np.log((1-p_hat)**(total-breaches) * p_hat**breaches))
-    
+    log_null = (total - breaches) * np.log(1-p) + breaches * np.log(p)
+
+    if breaches == 0 or breaches == total:
+        log_alt = 0.0
+    else:
+        log_alt = (total - breaches) * np.log(1-p_hat) + breaches * np.log(p_hat)
+    lr = -2 *(log_null-log_alt)
     critical = chi2.ppf(0.95, df=1)
     passed = lr < critical
     
@@ -59,14 +60,14 @@ def christoffersen_test(breach_dates, total,window=252, confidence=0.95):
     pi   = (n01+n11)/(n00+n01+n10+n11)
 
     log_l_null = np.log((1-pi)**(n00+n10) * pi**(n01+n11))
-    log_l_alt = np.log((1-pi01)**n00 * pi01**n01 * (1-pi11)**n01 * pi11**n11)
+    log_l_alt = np.log((1-pi01)**n00 * pi01**n01 * (1-pi11)**n10 * pi11**n11)
     lr_ind = -2*(log_l_null - log_l_alt)
     ind_passed = lr_ind < chi2.ppf(confidence,df=1)
 
     breaches = int(hits.sum())
     lr_uc,_ = kupiec_test(breaches,total,confidence)
     lr_cc = lr_uc + lr_ind
-    cc_passed = lr_cc < chi2.ppf(confidence,df=1)
+    cc_passed = lr_cc < chi2.ppf(confidence,df=2)
 
     transitions = {"n00": n00, "n01": n01, "n10": n10, "n11": n11,"pi01": pi01, "pi11": pi11, "pi": pi}
     
