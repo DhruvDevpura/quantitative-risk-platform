@@ -57,14 +57,14 @@ def test_rho_put_negative():
 
 #Monte Carlo tests
 def test_mc_call_close_to_bs():
-    mc = mc_call_price(42, 40, 0.5, 0.1, 0.2)
+    price, se = mc_call_price(42, 40, 0.5, 0.1, 0.2, n_sims=100000, seed=1, return_se=True)
     bs = bs_call_price(42, 40, 0.5, 0.1, 0.2)
-    assert abs(mc - bs) / bs < 0.05
+    assert abs(price - bs) < 3 * se
 
 def test_mc_put_close_to_bs():
-    mc = mc_put_price(42, 40, 0.5, 0.1, 0.2)
+    price, se = mc_put_price(42, 40, 0.5, 0.1, 0.2, n_sims=100000, seed=1, return_se=True)
     bs = bs_put_price(42, 40, 0.5, 0.1, 0.2)
-    assert abs(mc - bs) / bs < 0.05
+    assert abs(price - bs) < 3 * se
 
 #Bond pricing tests
 def test_bond_price():

@@ -58,8 +58,8 @@ def test_unknown_dist_rejected():
         simulate_returns(returns,weights,n_sim=100,dist="lognormal")
 
 def test_t_and_normal_have_same_variance():
-    sn = simulate_returns(returns,weights,n_sim = 200,dist="normal").std()
-    st = simulate_returns(returns,weights,n_sim = 200,dist="t",nu=5.0).std()
+    sn = simulate_returns(returns,weights,n_sim = 200000,dist="normal").std()
+    st = simulate_returns(returns,weights,n_sim = 200000,dist="t",nu=5.0).std()
     assert abs(sn-st)/sn < 0.02
     
 def test_estimate_nu_positive():
