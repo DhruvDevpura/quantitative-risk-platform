@@ -16,6 +16,8 @@ Value-at-Risk, VaR backtesting, portfolio optimisation and stress testing, writt
 
 Daily mean return is −0.0572% and daily volatility is 0.9227%, which annualises to 14.6%. That is roughly index-level volatility, not a low-risk portfolio.
 
+The figures in this README are a snapshot of the window above. The loader always downloads the latest two years, so rerunning the code moves the window and changes every number. A rerun on 2026-10-05 covered 2024-10-08 to 2026-10-05 (498 returns, 246 backtest days) and gave 22 breaches against 12.3 expected, Kupiec LR = 6.59 (p = 0.010). The conclusion did not change: the model still breaches too often.
+
 The dashboard lets you pick any NSE tickers, but it uses **equal weights** across whatever you select. The figures in this README come from the fixed 30/25/20/15/10 portfolio in `data/portfolio.py`, so the two will not match.
 
 ## Key results
@@ -87,6 +89,14 @@ On a 5-year window the same model passes Kupiec (55 breaches against 49 expected
 
 **Pricing (`src/pricing/`):** Black-Scholes prices and Greeks for calls and puts, a put-call parity check, Monte Carlo option pricing, and bond price, yield to maturity and duration.
 
+## Testing
+
+56 pytest tests: 18 for risk, 17 for pricing, 12 for stress testing and backtesting, and 9 for optimisation. Each test file also runs on its own (`pytest.ini` puts the repo root on the import path).
+
+The statistical tests are checked against inputs with known answers rather than against the market. Kupiec must accept the expected breach count, reject too many breaches, and reject zero breaches. Christoffersen independence must reject a block of consecutive breaches, both mid-sample and at the end of the sample. Writing these exposed two bugs, both now fixed. Kupiec returned "pass" for a model with zero breaches, which should be rejected (LR = 25.2 over 246 days at 95%). Christoffersen used the wrong exponent in its alternative likelihood, which made the statistic −∞ for a breach cluster at the end of the sample, so the most clustered case passed.
+
+Monte Carlo tests use a fixed seed and compare against Black-Scholes within three standard errors of the simulation, not a fixed percentage. The Student-t simulation is checked against the normal at 200,000 draws, where the sampling error is small enough for the variance comparison to mean something.
+
 ## Figures
 
 ![VaR comparison](docs/var_comparison.png)
@@ -112,6 +122,7 @@ The tests download live data from Yahoo Finance, so they need a network connecti
 
 ```
 ├── dashboard.py
+├── pytest.ini
 ├── data/            data_loader.py, portfolio.py
 ├── src/
 │   ├── risk/
