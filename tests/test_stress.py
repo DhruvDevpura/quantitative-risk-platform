@@ -26,10 +26,6 @@ def test_correlation_shock_diagonal_unchanged():
     shocked = correlation_shock(cov_matrix)
     assert np.allclose(np.diag(shocked), np.diag(cov_matrix), rtol=0.01)
 
-def test_volatility_shock_scales():
-    shocked = volatility_shock(cov_matrix, factor=3.0)
-    assert np.allclose(shocked, cov_matrix * 3.0)
-
 def test_stressed_var_worse_than_normal():
     normal = stressed_var(returns, weights, cov_matrix)
     shocked = correlation_shock(cov_matrix, shock_corr=0.9)
@@ -41,6 +37,11 @@ def test_vol_shock_var_worse_than_normal():
     vol_shocked = volatility_shock(cov_matrix, factor=3.0)
     stressed = stressed_var(returns, weights, vol_shocked)
     assert stressed < normal
+
+def test_volatility_shock_scales_vol():
+    cov = np.array([[0.04, 0.01], [0.01, 0.09]])
+    shocked = volatility_shock(cov, 3.0)
+    assert np.allclose(np.sqrt(np.diag(shocked)), 3 * np.sqrt(np.diag(cov)))
 
 #Backtest tests
 def test_backtest_breach_count_reasonable():

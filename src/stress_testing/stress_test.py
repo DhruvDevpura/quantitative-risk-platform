@@ -17,8 +17,8 @@ def correlation_shock(cov_matrix, shock_corr=0.9):
     return stressed_cov
 
 def volatility_shock(cov_matrix, factor=3.0):
-    #Multiply covariance matrix by stress factor.
-    return cov_matrix * factor
+    #Scale volatilities by factor, covariance scales by factor squared.
+    return cov_matrix * factor**2
 
 def stressed_var(returns, weights, stressed_cov, n_simulations=10000, confidence=0.95,seed=1):
     #Calculate Monte Carlo VaR using stressed covariance matrix.
