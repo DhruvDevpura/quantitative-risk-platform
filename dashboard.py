@@ -23,9 +23,6 @@ from src.optimization.optimization_comparison import plot_weight_comparison
 from src.stress_testing.stress_test import historical_scenario, correlation_shock, volatility_shock, stressed_var, plot_stress_comparison
 from src.stress_testing.var_backtest import backtest_var, kupiec_test, christoffersen_test, plot_backtest
 
-from src.pricing.black_scholes import bs_call_price, bs_put_price, delta_call, delta_put, gamma, vega, theta_call, theta_put, rho_call, rho_put
-from src.pricing.bond_pricing import bond_price, yield_to_maturity, duration
-from src.pricing.monte_carlo import mc_call_price, mc_put_price
 
 st.set_page_config(layout="wide", page_title="Quant Risk Platform")
 
@@ -63,7 +60,7 @@ def load_crisis_data(tickers, start, end):
 
 
 st.title("Quantitative Risk Analytics Platform")
-st.markdown("Built on real NSE market data · Black-Scholes · VaR · Portfolio Optimization · Stress Testing")
+st.markdown("Built on real NSE market data · VaR · Backtesting · Portfolio Optimization · Stress Testing")
 
 st.sidebar.title("Configuration")
 
@@ -118,11 +115,10 @@ mean_returns = data["mean_returns"]
 weights = data["weights"]
 tickers = data["tickers"]
 
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3 = st.tabs([
     "Risk Analysis",
     "Portfolio Optimizer",
-    "Stress Testing",
-    "Options & Bonds"
+    "Stress Testing"
 ])
 
 with tab1:
@@ -326,110 +322,3 @@ with tab3:
         fig = plot_backtest(port_returns, breach_dates)
         st.pyplot(fig)
         plt.close()
-
-with tab4:
-    st.header("Options & Bonds")
-
-    option_tab, bond_tab = st.tabs(["Options", "Bonds"])
-
-    with option_tab:
-        st.subheader("Black-Scholes Option Pricer")
-        col1, col2 = st.columns(2)
-        with col1:
-            S = st.slider("Spot Price (S)", 50, 500, 100)
-            K = st.slider("Strike Price (K)", 50, 500, 100)
-            T = st.slider("Time to Maturity (T, years)", 0.1, 3.0, 1.0, step=0.1)
-        with col2:
-            r = st.slider("Risk-Free Rate (r)", 0.01, 0.15, 0.06, step=0.01)
-            sigma = st.slider("Volatility (σ)", 0.05, 0.80, 0.20, step=0.01)
-
-        st.divider()
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("Call Option")
-            st.metric("BS Call Price", f"₹{bs_call_price(S, K, T, r, sigma):.4f}")
-            st.metric("MC Call Price", f"₹{mc_call_price(S, K, T, r, sigma):.4f}")
-        with col2:
-            st.subheader("Put Option")
-            st.metric("BS Put Price", f"₹{bs_put_price(S, K, T, r, sigma):.4f}")
-            st.metric("MC Put Price", f"₹{mc_put_price(S, K, T, r, sigma):.4f}")
-
-        st.divider()
-        st.subheader("Greeks")
-        greeks_df = pd.DataFrame({
-            "Greek": ["Delta", "Gamma", "Vega", "Theta", "Rho"],
-            "Call": [
-                f"{delta_call(S, K, T, r, sigma):.4f}",
-                f"{gamma(S, K, T, r, sigma):.4f}",
-                f"{vega(S, K, T, r, sigma):.4f}",
-                f"{theta_call(S, K, T, r, sigma):.4f}",
-                f"{rho_call(S, K, T, r, sigma):.4f}"
-            ],
-            "Put": [
-                f"{delta_put(S, K, T, r, sigma):.4f}",
-                f"{gamma(S, K, T, r, sigma):.4f}",
-                f"{vega(S, K, T, r, sigma):.4f}",
-                f"{theta_put(S, K, T, r, sigma):.4f}",
-                f"{rho_put(S, K, T, r, sigma):.4f}"
-            ]
-        })
-        st.dataframe(greeks_df, use_container_width=True)
-
-        st.divider()
-        st.subheader("Greeks Sensitivity")
-        S_range = np.linspace(50, 150, 200)
-        deltas = [delta_call(s, K, T, r, sigma) for s in S_range]
-        gammas = [gamma(s, K, T, r, sigma) for s in S_range]
-        vegas = [vega(s, K, T, r, sigma) for s in S_range]
-
-        fig, axes = plt.subplots(1, 3, figsize=(16, 5))
-        axes[0].plot(S_range, deltas, color='#e74c3c', linewidth=2)
-        axes[0].set_title('Delta vs Stock Price')
-        axes[0].set_xlabel('Stock Price')
-        axes[0].set_ylabel('Delta')
-        axes[0].axvline(K, color='gray', linestyle='--', alpha=0.5, label='Strike')
-        axes[0].legend()
-
-        axes[1].plot(S_range, gammas, color='#3498db', linewidth=2)
-        axes[1].set_title('Gamma vs Stock Price')
-        axes[1].set_xlabel('Stock Price')
-        axes[1].set_ylabel('Gamma')
-        axes[1].axvline(K, color='gray', linestyle='--', alpha=0.5, label='Strike')
-        axes[1].legend()
-
-        axes[2].plot(S_range, vegas, color='#2ecc71', linewidth=2)
-        axes[2].set_title('Vega vs Stock Price')
-        axes[2].set_xlabel('Stock Price')
-        axes[2].set_ylabel('Vega')
-        axes[2].axvline(K, color='gray', linestyle='--', alpha=0.5, label='Strike')
-        axes[2].legend()
-
-        plt.suptitle(f'Greeks Sensitivity (K={K}, T={T}yr, σ={sigma:.0%})', fontsize=13)
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
-
-    with bond_tab:
-        st.subheader("Bond Pricing")
-        col1, col2 = st.columns(2)
-        with col1:
-            face_value = st.slider("Face Value (₹)", 100, 10000, 1000, step=100)
-            coupon_rate = st.slider("Coupon Rate", 0.01, 0.20, 0.08, step=0.01)
-            market_price = st.slider("Market Price (₹)", 100, 10000, 950, step=50)
-        with col2:
-            bond_T = st.slider("Maturity (years)", 1, 30, 10)
-            frequency = st.selectbox("Coupon Frequency", [1, 2, 4], index=1)
-
-        r_bond = 0.06
-        bp = bond_price(face_value, coupon_rate, r_bond, bond_T, frequency)
-        ytm = yield_to_maturity(face_value, coupon_rate, market_price, bond_T, frequency)
-        dur = duration(face_value, coupon_rate, r_bond, bond_T, frequency)
-
-        st.divider()
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Bond Price", f"₹{bp:.2f}")
-        with col2:
-            st.metric("Yield to Maturity", f"{ytm*100:.4f}%")
-        with col3:
-            st.metric("Duration", f"{dur:.4f} years")

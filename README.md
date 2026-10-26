@@ -87,15 +87,13 @@ On a 5-year window the same model passes Kupiec (55 breaches against 49 expected
 
 **Stress testing (`src/stress_testing/stress_test.py`):** a correlation shock, a volatility shock, and a replay of March 2020 returns.
 
-**Pricing (`src/pricing/`):** Black-Scholes prices and Greeks for calls and puts, a put-call parity check, Monte Carlo option pricing, and bond price, yield to maturity and duration.
-
 ## Testing
 
-56 pytest tests: 18 for risk, 17 for pricing, 12 for stress testing and backtesting, and 9 for optimisation. Each test file also runs on its own (`pytest.ini` puts the repo root on the import path).
+39 pytest tests: 18 for risk, 12 for stress testing and backtesting, and 9 for optimisation. Each test file also runs on its own (`pytest.ini` puts the repo root on the import path).
 
 The statistical tests are checked against inputs with known answers rather than against the market. Kupiec must accept the expected breach count, reject too many breaches, and reject zero breaches. Christoffersen independence must reject a block of consecutive breaches, both mid-sample and at the end of the sample. Writing these exposed two bugs, both now fixed. Kupiec returned "pass" for a model with zero breaches, which should be rejected (LR = 25.2 over 246 days at 95%). Christoffersen used the wrong exponent in its alternative likelihood, which made the statistic −∞ for a breach cluster at the end of the sample, so the most clustered case passed.
 
-Monte Carlo tests use a fixed seed and compare against Black-Scholes within three standard errors of the simulation, not a fixed percentage. The Student-t simulation is checked against the normal at 200,000 draws, where the sampling error is small enough for the variance comparison to mean something.
+Monte Carlo tests use a fixed seed. The Student-t simulation is checked against the normal at 200,000 draws, where the sampling error is small enough for the variance comparison to mean something.
 
 ## Figures
 
@@ -104,7 +102,6 @@ Monte Carlo tests use a fixed seed and compare against Black-Scholes within thre
 ![Stress tests](docs/stress_test_comparison.png)
 ![Efficient frontier](docs/efficient_frontier.png)
 ![Optimisation comparison](docs/optimization_comparison.png)
-![Greeks](docs/greeks_sensitivity.png)
 
 ## Running it
 
@@ -127,8 +124,7 @@ The tests download live data from Yahoo Finance, so they need a network connecti
 ├── src/
 │   ├── risk/
 │   ├── stress_testing/
-│   ├── optimization/
-│   └── pricing/
+│   └── optimization/
 ├── tests/
 └── docs/            figures
 ```
